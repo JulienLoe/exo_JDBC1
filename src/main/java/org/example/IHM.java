@@ -19,6 +19,7 @@ public class IHM {
             System.out.println("2. Afficher la totalité des étudiants");
             System.out.println("3. Afficher les étudiants d'une classe");
             System.out.println("4. Supprimer un étudiant");
+            System.out.println("0. Quitter");
             choix = scanner.nextInt();
 
             switch (choix) {
@@ -52,17 +53,25 @@ public class IHM {
             scanner.nextLine();
             System.out.println("Merci de saisir votre date de diplôme :");
             String str = scanner.nextLine();
-
             Date date = new SimpleDateFormat("dd/MM/yyyy").parse(str);
+            java.sql.Date dateSql = new java.sql.Date(date.getTime());
+            Student student = new Student(lastname, firstname, nbclass, dateSql);
             String request = "INSERT INTO student (first_name, last_name, nb_class, date_of_birth) VALUES (?, ?, ?, ?)";
 
 
-            PreparedStatement preparedStatement = connection.prepareStatement(request);
-            preparedStatement.setString(1, firstname);
-            preparedStatement.setString(2, lastname);
-            preparedStatement.setInt(3, nbclass);
-            preparedStatement.setDate(4, new java.sql.Date(date.getTime()));
+
+            PreparedStatement preparedStatement = connection.prepareStatement(request, Statement.RETURN_GENERATED_KEYS);
+
+            preparedStatement.setString(1, student.getLastname());
+            preparedStatement.setString(2, student.getFirstname());
+            preparedStatement.setInt(3, student.getNbclass());
+            preparedStatement.setDate(4,student.getDate());
             int nbRows = preparedStatement.executeUpdate();
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if(resultSet.next()){
+                System.out.println("ID de l'étudiant est :" + resultSet.getInt(1));
+            }
+
 
             if (nbRows > 0) {
                 System.out.println("Des données renvoyées par la requête");
@@ -92,8 +101,9 @@ public class IHM {
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(request);
         while (resultSet.next()) {
-            System.out.println(resultSet.getInt("id") + " , " + resultSet.getString("first_name") +
-                    " , " + resultSet.getString("last_name"));
+            Student student = new Student(resultSet.getString("first_name"), resultSet.getString("last_name"), resultSet.getInt("nb_class"), resultSet.getDate("date_of_birth")  );
+            System.out.println(student.getFirstname() + " , " + student.getLastname() +
+                    " , " + student.getNbclass() + " , " + student.getDate());
         }
         System.out.println();
     }
@@ -107,6 +117,9 @@ public class IHM {
         Statement statementStudent = connection.createStatement();
         ResultSet resultSetStudent = statementStudent.executeQuery(requestStudent);
         while (resultSetStudent.next()) {
+            Student student = new Student(resultSetStudent.getString("first_name"), resultSetStudent.getString("last_name"), resultSetStudent.getInt("nb_class"), resultSetStudent.getDate("date_of_birth")  );
+            System.out.println(student.getFirstname() + " , " + student.getLastname() +
+                    " , " + student.getNbclass() + " , " + student.getDate());
             System.out.println(resultSetStudent.getInt("id") + " , " + resultSetStudent.getString("first_name") +
                     " , " + resultSetStudent.getString("last_name"));
         }
